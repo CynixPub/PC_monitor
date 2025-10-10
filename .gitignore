@@ -1,0 +1,13 @@
+# 数据库文件
+history.db
+
+# PyInstaller 生成的目录
+/dist/
+/build/
+/.vscode/
+
+# PyInstaller 配置文件
+#*.spec
+
+# Python 缓存
+__pycache__/
