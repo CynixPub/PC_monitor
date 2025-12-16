@@ -1,7 +1,7 @@
 import math
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QTableView, QHeaderView, 
-    QHBoxLayout, QPushButton, QLabel, QStyledItemDelegate, QMenu
+    QHBoxLayout, QPushButton, QLabel, QStyledItemDelegate, QMenu, QApplication
 )
 from PySide6.QtSql import QSqlDatabase, QSqlQueryModel, QSqlQuery
 from PySide6.QtCore import Qt
@@ -26,7 +26,7 @@ class HistoryWindow(QDialog):
     def __init__(self, db_path='history.db', parent=None):
         super().__init__(parent)
         self.setWindowTitle("历史数据")
-        self.resize(800, 600)
+        self.setFixedSize(900, 620) # 固定窗口大小，禁止拖动调整
 
         # --- 分页变量 ---
         self.current_page = 0
@@ -48,6 +48,16 @@ class HistoryWindow(QDialog):
         # --- UI 初始化 ---
         self._setup_ui()
         self._go_to_page(1) # 跳转到第一页
+        self._center_window()
+
+    def _center_window(self):
+        """将窗口移动到屏幕中心"""
+        screen = QApplication.primaryScreen()
+        if screen:
+            rect = screen.availableGeometry()
+            x = (rect.width() - self.width()) // 2
+            y = (rect.height() - self.height()) // 2
+            self.move(x, y)
 
     def _get_total_rows(self):
         """获取总记录数"""
@@ -66,6 +76,31 @@ class HistoryWindow(QDialog):
         self.view.setEditTriggers(QTableView.NoEditTriggers)
         self.view.verticalHeader().setVisible(False)  # 1. 隐藏行号
         self.view.setItemDelegate(CenteredDelegate(self))
+        
+        # --- 样式优化：隔行变色 ---
+        self.view.setAlternatingRowColors(True)
+        self.view.setStyleSheet("""
+            QTableView {
+                background-color: #1e1e2e;
+                alternate-background-color: #2a2b3c;
+                selection-background-color: #45475a;
+                color: #cdd6f4;
+                gridline-color: #313244;
+                border: none;
+            }
+            QHeaderView::section {
+                background-color: #181825;
+                color: #89b4fa;
+                padding: 5px;
+                border: 1px solid #313244;
+                font-weight: bold;
+            }
+            QTableCornerButton::section {
+                background-color: #181825;
+                border: 1px solid #313244;
+            }
+        """)
+
         # 1. 设置为行选中
         self.view.setSelectionBehavior(QTableView.SelectRows)
         self.view.setSelectionMode(QTableView.SingleSelection) # 可选，单行或多行

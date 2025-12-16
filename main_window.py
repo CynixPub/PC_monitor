@@ -29,6 +29,8 @@ class MainWindow(QMainWindow):
         
         # 1. 运行时加载 UI
         self._load_ui(resource_path("main.ui")) # <--- 使用新函数
+        self.setFixedSize(self.size())          # 禁止调整窗口大小
+        self._center_window()                   # 窗口居中
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, True)
         self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
@@ -272,7 +274,9 @@ class MainWindow(QMainWindow):
         """显示关于对话框"""
         QMessageBox.about(self, 
             "关于", 
-            "\n\nCyMouse 数据查看工具 v1.0\n\n    Powered by Cynix.cc "
+            "<p style='font-size: 1px;'>&nbsp;</p>"
+            "<p style='font-size: 14px; font-weight: bold;'> CyMouse 数据查看工具 v1.0 &nbsp;</p>"
+            "<p align='center'>Powered by <a href='https://cynix.cc' style='color: #89b4fa;'>Cynix.cc</a>&nbsp;&nbsp;&nbsp;</p>"
         )
 
     def _log_to_ui(self, message: str):
@@ -412,20 +416,7 @@ class MainWindow(QMainWindow):
                 self.label_distance.setText(meters_text if meters_text else str(distance))
             except Exception:
                 self.label_distance.setText(str(distance))
-            # 使显示内容自适应宽度（在绝对布局下通过调整控件尺寸实现）
-            try:
-                original_height = self.label_distance.height()
-                original_geo = self.label_distance.geometry()
-                self.label_distance.adjustSize()  # 可能改变宽高
-                # 仅采用新的宽度，恢复原高度，避免垂直位置视觉偏移
-                self.label_distance.setGeometry(
-                    original_geo.x(),
-                    original_geo.y(),
-                    self.label_distance.width(),
-                    original_height
-                )
-            except Exception:
-                pass
+            
         if self.label_leftclick:
             self.label_leftclick.setText(str(left))
         if self.label_midclick:
@@ -433,6 +424,16 @@ class MainWindow(QMainWindow):
         if self.label_rightclick:
             self.label_rightclick.setText(str(right))
         self._log_to_ui("鼠标数据已更新到界面。")
+
+    def _center_window(self):
+        """将窗口移动到屏幕中心"""
+        screen = QApplication.primaryScreen()
+        if screen:
+            screen_geometry = screen.availableGeometry()
+            # 手动计算居中位置，避免依赖未显示的 frameGeometry
+            x = (screen_geometry.width() - self.width()) // 2
+            y = (screen_geometry.height() - self.height()) // 2
+            self.move(x, y)
 
     def _load_ui(self, ui_path: str) -> None:
         loader = QUiLoader()
@@ -446,15 +447,23 @@ class MainWindow(QMainWindow):
         if loaded is None:
             raise RuntimeError(f"加载 UI 失败: {ui_path}")
 
+        # --- 提取样式表并应用到全局，以便子窗口（如历史窗口）也能继承样式 ---
+        app_style = loaded.styleSheet()
+        if app_style:
+            QApplication.instance().setStyleSheet(app_style)
+            loaded.setStyleSheet("") # 清除控件自身的样式表，避免双重应用
+
         if isinstance(loaded, QMainWindow):
             copied_title = loaded.windowTitle()
             copied_size = loaded.size()
             central = loaded.takeCentralWidget()
             self.setCentralWidget(central)
             self.setWindowTitle(copied_title)
-            self.setFixedSize(copied_size)
+            self.resize(copied_size) 
             loaded.deleteLater()
         else:
+            self.setWindowTitle(loaded.windowTitle())
+            self.resize(loaded.size())
             self.setCentralWidget(loaded)
 
     def _init_status_bar(self):

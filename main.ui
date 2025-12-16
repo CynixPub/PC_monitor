@@ -1,385 +1,253 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>MainWidget</class>
+ <widget class="QWidget" name="MainWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>548</width>
-    <height>362</height>
+    <width>800</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>CyMouse 数据查看工具 v1.0</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="QLabel" name="label_hr_title">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>30</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>心率</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_hr_value">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>30</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_spo2_title">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>70</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>血氧</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_spo2_value">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>70</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_mc_title">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>110</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>微循环</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_mc_value">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>110</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_fi_title">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>150</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>疲劳指数</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_fi_value">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>150</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_sbp_title">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>30</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>收缩压</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_sbp_value">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>30</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_dbp_title">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>70</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>舒张压</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_dbp_value">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>70</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_co_title">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>110</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>心输出</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_co_value">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>110</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_pr_title">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>150</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>外周阻力</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_pr_value">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>150</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_start">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>40</y>
-      <width>71</width>
-      <height>50</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>开始体检</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_history">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>110</y>
-      <width>71</width>
-      <height>50</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>历史数据</string>
-    </property>
-   </widget>
-   <widget class="Line" name="line">
-    <property name="geometry">
-     <rect>
-      <x>3</x>
-      <y>200</y>
-      <width>541</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Orientation::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>246</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>移动距离</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_distance">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>246</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>左键点击</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_leftclick">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_5">
-    <property name="geometry">
-     <rect>
-      <x>390</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>右键点击</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_rightclick">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_7">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>中键点击</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_midclick">
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>296</y>
-      <width>50</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>N/A</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_mousedata">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>230</y>
-      <width>71</width>
-      <height>50</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>刷新</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
+  <property name="styleSheet">
+   <string notr="true">
+    QWidget {
+        background-color: #1e1e2e;
+        color: #cdd6f4;
+        font-family: &quot;Segoe UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif;
+    }
+    QGroupBox {
+        border: 2px solid #45475a;
+        border-radius: 8px;
+        margin-top: 1.5em;
+        font-weight: bold;
+        color: #89b4fa;
+        font-size: 14px;
+        background-color: #252635;
+    }
+    QGroupBox::title {
+        subcontrol-origin: margin;
+        left: 10px;
+        padding: 0 5px;
+    }
+    QLabel {
+        color: #bac2de;
+        font-size: 13px;
+        background-color: transparent;
+    }
+    /* Value Labels Styling */
+    QLabel#label_hr_value, QLabel#label_spo2_value, QLabel#label_mc_value, QLabel#label_fi_value,
+    QLabel#label_sbp_value, QLabel#label_dbp_value, QLabel#label_co_value, QLabel#label_pr_value,
+    QLabel#label_distance, QLabel#label_leftclick, QLabel#label_rightclick, QLabel#label_midclick {
+        color: #a6e3a1;
+        font-weight: bold;
+        font-size: 16px;
+        font-family: &quot;Consolas&quot;, &quot;Monaco&quot;, monospace;
+    }
+    QPushButton {
+        background-color: #313244;
+        border: 1px solid #45475a;
+        border-radius: 6px;
+        color: #cdd6f4;
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    QPushButton:hover {
+        background-color: #45475a;
+        border-color: #585b70;
+    }
+    QPushButton:pressed {
+        background-color: #585b70;
+    }
+    QPushButton#btn_start {
+        background-color: #89b4fa;
+        color: #1e1e2e;
+        font-weight: bold;
+        border: none;
+    }
+    QPushButton#btn_start:hover {
+        background-color: #b4befe;
+    }
+    QPushButton#btn_start:pressed {
+        background-color: #74c7ec;
+    }
+   </string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_main">
+   <property name="spacing">
+    <number>20</number>
+   </property>
+   <property name="leftMargin">
+    <number>25</number>
+   </property>
+   <property name="topMargin">
+    <number>25</number>
+   </property>
+   <property name="rightMargin">
+    <number>25</number>
+   </property>
+   <property name="bottomMargin">
+    <number>25</number>
+   </property>
+   
+   <!-- Health Section -->
+   <item>
+    <widget class="QGroupBox" name="groupBox_health">
+     <property name="title">
+      <string>❤️ 健康监测</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_health">
+      <property name="verticalSpacing">
+       <number>15</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>20</number>
+      </property>
+      
+      <!-- Row 0 -->
+      <item row="0" column="0"><widget class="QLabel" name="label_hr_title"><property name="text"><string>心率 (HR)</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLabel" name="label_hr_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+      <item row="0" column="2"><widget class="QLabel" name="label_sbp_title"><property name="text"><string>收缩压 (SBP)</string></property></widget></item>
+      <item row="0" column="3"><widget class="QLabel" name="label_sbp_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+
+      <!-- Row 1 -->
+      <item row="1" column="0"><widget class="QLabel" name="label_spo2_title"><property name="text"><string>血氧 (SpO2)</string></property></widget></item>
+      <item row="1" column="1"><widget class="QLabel" name="label_spo2_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+      <item row="1" column="2"><widget class="QLabel" name="label_dbp_title"><property name="text"><string>舒张压 (DBP)</string></property></widget></item>
+      <item row="1" column="3"><widget class="QLabel" name="label_dbp_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+
+      <!-- Row 2 -->
+      <item row="2" column="0"><widget class="QLabel" name="label_mc_title"><property name="text"><string>微循环 (MC)</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLabel" name="label_mc_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+      <item row="2" column="2"><widget class="QLabel" name="label_co_title"><property name="text"><string>心输出 (CO)</string></property></widget></item>
+      <item row="2" column="3"><widget class="QLabel" name="label_co_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+
+      <!-- Row 3 -->
+      <item row="3" column="0"><widget class="QLabel" name="label_fi_title"><property name="text"><string>疲劳指数 (FI)</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLabel" name="label_fi_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+      <item row="3" column="2"><widget class="QLabel" name="label_pr_title"><property name="text"><string>外周阻力 (PR)</string></property></widget></item>
+      <item row="3" column="3"><widget class="QLabel" name="label_pr_value"><property name="text"><string>--</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- Mouse Section -->
+   <item>
+    <widget class="QGroupBox" name="groupBox_mouse">
+     <property name="title">
+      <string>🖱️ 鼠标统计</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_mouse">
+      <property name="verticalSpacing">
+       <number>15</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>20</number>
+      </property>
+      <item row="0" column="0"><widget class="QLabel" name="label"><property name="text"><string>移动距离</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLabel" name="label_distance"><property name="text"><string>0 m</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+      
+      <item row="0" column="2"><widget class="QLabel" name="label_3"><property name="text"><string>左键点击</string></property></widget></item>
+      <item row="0" column="3"><widget class="QLabel" name="label_leftclick"><property name="text"><string>0</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+
+      <item row="1" column="0"><widget class="QLabel" name="label_7"><property name="text"><string>中键点击</string></property></widget></item>
+      <item row="1" column="1"><widget class="QLabel" name="label_midclick"><property name="text"><string>0</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+
+      <item row="1" column="2"><widget class="QLabel" name="label_5"><property name="text"><string>右键点击</string></property></widget></item>
+      <item row="1" column="3"><widget class="QLabel" name="label_rightclick"><property name="text"><string>0</string></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- Spacer to push buttons to bottom -->
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+
+   <!-- Buttons Section -->
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_buttons">
+     <property name="spacing">
+      <number>15</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_mousedata">
+       <property name="text">
+        <string>刷新鼠标数据</string>
+       </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>36</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_history">
+       <property name="text">
+        <string>查看历史趋势</string>
+       </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>36</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_start">
+       <property name="text">
+        <string>开始体检</string>
+       </property>
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>40</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

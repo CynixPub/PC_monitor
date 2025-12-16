@@ -1,12 +1,13 @@
 import struct
 import serial
+import time
 from serial.tools import list_ports
 
 from PySide6.QtCore import QObject, Signal, QThread
 
 from constants import (
     PROTO_VER, CMD_ACK, CMD_NOTIFY_HEALTH_DATA_READY, CMD_GET_LAST_HEALTH_DATA,
-    CMD_GET_MOUSE_DATA
+    CMD_GET_MOUSE_DATA, CMD_PING, ACK_SUCCESS
 )
 
 
@@ -61,23 +62,160 @@ class SerialWorker(QObject):
             CMD_GET_MOUSE_DATA: self._handle_mouse_data,
         }
 
+    def get_port_info(self, port_name):
+            """
+            根据端口名获取详细信息和类型
+            返回: (description, hwid, port_type)
+            """
+            # 遍历所有可用串口找到当前连接的这个
+            for port in list_ports.comports():
+                if port.device == port_name:
+                    description = port.description
+                    hwid = port.hwid
+                    
+                    # --- 类型识别逻辑 ---
+                    port_type = "未知类型"
+                    type_id = -1
+                    
+                    # 转换为大写以方便匹配
+                    upper_desc = description.upper()
+                    upper_hwid = hwid.upper()
+
+                    if "BTHENUM" in upper_hwid or "BLUETOOTH" in upper_desc:
+                        port_type = "蓝牙串口 (Bluetooth)"
+                        type_id = 1
+                    elif "USB" in upper_hwid:
+                        port_type = "USB转串口 (USB-Serial)"
+                        type_id = 2
+                    elif "ACPI" in upper_hwid or "PNP" in upper_hwid:
+                        port_type = "原生硬件串口 (Native)"
+                        type_id = 3
+                    elif "VIRTUAL" in upper_desc:
+                        port_type = "虚拟串口 (Virtual)"
+                        type_id = 4
+                    
+                    return description, hwid, port_type, type_id
+            
+            return "未知描述", "未知ID", "未知类型", -1
+
+
+    def _read_one_frame(self, buffer: bytes):
+        """
+        尝试从缓冲区读取一个帧。
+        
+        Returns:
+            tuple: (new_buffer, result)
+            - new_buffer: 更新后的缓冲区
+            - result: 
+                None: 数据不足，无法解析
+                False: 解析了帧但校验失败（CRC错误等），已丢弃
+                dict: {'cmd': int, 'payload': bytes, 'ver': int} 解析成功
+        """
+        # 1. Find header
+        start_index = buffer.find(b'\xAA\x55')
+        if start_index == -1:
+            if len(buffer) > 1:
+                return buffer[-1:], None
+            return buffer, None
+            
+        if start_index > 0:
+            buffer = buffer[start_index:]
+            
+        if len(buffer) < 8:
+            return buffer, None
+            
+        _, _, payload_len = struct.unpack('<BBH', buffer[2:6])
+        frame_len = 8 + payload_len
+        
+        if len(buffer) < frame_len:
+            return buffer, None
+            
+        frame = buffer[:frame_len]
+        new_buffer = buffer[frame_len:]
+        
+        # Validate
+        data_to_check = frame[2:6+payload_len]
+        received_crc = struct.unpack('<H', frame[6+payload_len:])[0]
+        calculated_crc = crc16_xmodem(data_to_check)
+        
+        if received_crc != calculated_crc:
+            self.log_message.emit(f"警告: CRC 校验失败 (收到 {received_crc}, 计算为 {calculated_crc}) Frame: {frame.hex(' ').upper()}")
+            return new_buffer, False
+            
+        proto_ver, cmd, _ = struct.unpack('<BBH', frame[2:6])
+        payload = frame[6:6+payload_len]
+        
+        return new_buffer, {'cmd': cmd, 'payload': payload, 'ver': proto_ver}
+
     def connect_serial(self, port_name: str, baudrate: int = 115200):
         """连接到串口"""
         self.port_name = port_name
         self.baudrate = baudrate
         
         try:
+            desc, hwid, p_type, type_id = self.get_port_info(self.port_name)
+            self.log_message.emit(f"尝试连接到串口 {self.port_name} ({desc}, {hwid}, 类型: {p_type})，类型ID {type_id}，波特率 {self.baudrate}...")
+
             self.serial_port = serial.Serial()
             self.serial_port.port = self.port_name
             self.serial_port.baudrate = self.baudrate
             self.serial_port.timeout = 0.1
+            self.serial_port.write_timeout = 1.0  # 设置写超时为1秒
             self.serial_port.dtr = False
             self.serial_port.rts = False
             self.serial_port.open()
 
             if self.serial_port.is_open:
+                # 打开串口，验证设备是否正确响应
+                self.log_message.emit("正在验证设备响应...")
+                
+                # 发送 PING 命令
+                self.send_frame(CMD_PING)
+                
+                # 等待 ACK 响应
+                start_time = time.time()
+                local_buffer = b''
+                verified = False
+                
+                while time.time() - start_time < 2.0: # 2秒超时
+                    if self.serial_port.in_waiting > 0:
+                        local_buffer += self.serial_port.read(self.serial_port.in_waiting)
+                        
+                        # 循环处理 buffer 中的数据
+                        while True:
+                            local_buffer, result = self._read_one_frame(local_buffer)
+                            
+                            if result is None:
+                                break
+                            
+                            if result is False:
+                                continue
+                                
+                            # Valid frame
+                            cmd = result['cmd']
+                            payload = result['payload']
+                            
+                            if cmd == CMD_ACK and len(payload) >= 2:
+                                orig_cmd, status = struct.unpack('<BB', payload)
+                                if orig_cmd == CMD_PING and status == ACK_SUCCESS:
+                                    verified = True
+                                    break
+                        
+                        if verified:
+                            break
+                    
+                    time.sleep(0.05)
+                
+                if not verified:
+                    self.log_message.emit("设备验证失败：未收到正确的 ACK 响应或超时。")
+                    self.serial_port.close()
+                    return False
+                
+                # 将剩余数据放入类成员 buffer，供 run 循环使用
+                self.read_buffer = local_buffer
+                
                 self.is_running = True
-                self.log_message.emit(f"串口 {self.port_name} 已连接。")
+                self.log_message.emit(f"串口 {self.port_name} 已连接且设备响应正常。")
                 self.connected.emit()
                 return True # 指示连接成功
             else:
@@ -120,6 +258,8 @@ class SerialWorker(QObject):
         try:
             self.serial_port.write(frame)
             self.log_message.emit(f"发送: {frame.hex(' ').upper()}")
+        except serial.SerialTimeoutException:
+            self.error_occurred.emit("发送数据超时。")
         except serial.SerialException as e:
             self.error_occurred.emit(f"发送数据失败: {e}")
 
@@ -162,58 +302,25 @@ class SerialWorker(QObject):
     def _process_read_data(self):
         """在缓冲区中循环查找并处理所有完整的数据帧"""
         while True:
-            # 1. 查找帧头
-            start_index = self.read_buffer.find(b'\xAA\x55')
-            if start_index == -1:
-                # 缓冲区中没有帧头。为防止缓冲区无限增长，只保留最后一个字节，
-                # 因为它可能是下一个帧的 AA。
-                if len(self.read_buffer) > 1:
-                    self.read_buffer = self.read_buffer[-1:]
-                return # 没有找到帧头，退出循环，等待更多数据
-
-            # 2. 丢弃帧头之前的所有无效数据
-            self.read_buffer = self.read_buffer[start_index:]
+            self.read_buffer, result = self._read_one_frame(self.read_buffer)
             
-            # 3. 检查是否有足够的数据构成一个最小帧 (帧头+固定部分+CRC)
-            # 2 (header) + 4 (ver,cmd,len) + 2 (crc) = 8 bytes
-            if len(self.read_buffer) < 8:
-                return # 数据不足以构成最小帧，等待更多数据
+            if result is None: # 数据不足
+                return
             
-            # 4. 解包获取 payload 长度
-            _, _, payload_len = struct.unpack('<BBH', self.read_buffer[2:6])
-
-            # 5. 计算完整的帧长度并检查缓冲区中是否有足够的数据
-            frame_len = 8 + payload_len
-            if len(self.read_buffer) < frame_len:
-                return # 帧不完整，等待更多数据
-            
-            # 6. 提取完整的数据帧
-            frame = self.read_buffer[:frame_len]
-            
-            # 7. 从缓冲区移除已处理的帧
-            self.read_buffer = self.read_buffer[frame_len:]
-
-            # 8. 校验并处理帧
-            fixed_part = frame[2:6]
-            payload = frame[6:6+payload_len]
-            received_crc = struct.unpack('<H', frame[6+payload_len:])[0]
-
-            data_to_check = frame[2:6+payload_len]
-            calculated_crc = crc16_xmodem(data_to_check)
-
-            if received_crc == calculated_crc:
-                proto_ver, cmd, _ = struct.unpack('<BBH', fixed_part)
+            if result is False: # CRC 校验失败
+                continue
                 
-                if proto_ver != PROTO_VER:
-                    self.log_message.emit(f"警告: 协议版本不匹配 (收到 {proto_ver}, 需要 {PROTO_VER})。")
-                    continue # 继续处理缓冲区中的下一个可能帧
-                    
-                self.log_message.emit(f"接收: CMD={hex(cmd)}, Payload={payload.hex(' ').upper()}")
-                self._handle_valid_frame(cmd, payload)
-            else:
-                self.log_message.emit(f"警告: CRC 校验失败 (收到 {received_crc}, 计算为 {calculated_crc}) Frame: {frame.hex(' ').upper()}")
+            # 校验通过，处理帧
+            cmd = result['cmd']
+            payload = result['payload']
+            proto_ver = result['ver']
             
-            # 继续循环，处理缓冲区中可能存在的下一个帧
+            if proto_ver != PROTO_VER:
+                self.log_message.emit(f"警告: 协议版本不匹配 (收到 {proto_ver}, 需要 {PROTO_VER})。")
+                continue 
+                
+            self.log_message.emit(f"接收: CMD={hex(cmd)}, Payload={payload.hex(' ').upper()}")
+            self._handle_valid_frame(cmd, payload)
 
     def _handle_valid_frame(self, cmd: int, payload: bytes):
         """处理校验通过的帧，并根据命令分发"""
