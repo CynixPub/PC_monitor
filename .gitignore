@@ -5,6 +5,7 @@ history.db
 /dist/
 /build/
 /.vscode/
+/.github/
 
 # PyInstaller 配置文件
 #*.spec
