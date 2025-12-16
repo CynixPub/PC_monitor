@@ -13,6 +13,6 @@ if __name__ == "__main__":
     
     main_window = MainWindow()
     # To show the main window on startup, uncomment the following line
-    main_window.show()
+    # main_window.show()
     
     sys.exit(app.exec())
