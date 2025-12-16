@@ -26,11 +26,11 @@ class HistoryWindow(QDialog):
     def __init__(self, db_path='history.db', parent=None):
         super().__init__(parent)
         self.setWindowTitle("历史数据")
-        self.setFixedSize(900, 620) # 固定窗口大小，禁止拖动调整
+        self.setFixedSize(900, 555) # 固定窗口大小，禁止拖动调整
 
         # --- 分页变量 ---
         self.current_page = 0
-        self.page_size = 20  # 每页显示20条
+        self.page_size = 15  # 每页显示20条
         self.total_rows = 0
         self.total_pages = 0
 
