@@ -119,7 +119,7 @@ class HistoryWindow(QDialog):
         self.extra_button = QPushButton("导出数据")
         self.extra_button.clicked.connect(self.export_data)
         self.ai_analysis_button = QPushButton("AI 分析")
-        #self.ai_analysis_button.clicked.connect(self.ai_analysis)
+        self.ai_analysis_button.clicked.connect(self.open_report_window)
 
         functions_layout = QHBoxLayout()
         functions_layout.addWidget(self.extra_button)
@@ -376,3 +376,9 @@ class HistoryWindow(QDialog):
             QSqlDatabase.removeDatabase(conn_name)
         print("历史数据窗口的数据库连接已关闭。")
         super().closeEvent(event)
+
+    def open_report_window(self):
+        """打开 AI 分析报告窗口"""
+        from report import ReportWindow
+        self.report_window = ReportWindow()
+        self.report_window.show()

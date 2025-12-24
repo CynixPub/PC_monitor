@@ -26,12 +26,13 @@ class DatabaseHandler:
             cursor = conn.cursor()
             
             columns_sql = ", ".join([f'"{key}" INTEGER' for key in self.metric_keys])
+            if columns_sql:
+                columns_sql = ", " + columns_sql
             
             create_table_sql = f"""
             CREATE TABLE IF NOT EXISTS health_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT NOT NULL,
-                {columns_sql}
+                created_at TEXT NOT NULL{columns_sql}
             );
             """
             cursor.execute(create_table_sql)
@@ -48,6 +49,18 @@ class DatabaseHandler:
             );
             """
             cursor.execute(create_mouse_sql)
+            
+            # 报告数据表
+            create_reports_sql = """
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                report_json TEXT,
+                images_data TEXT
+            );
+            """
+            cursor.execute(create_reports_sql)
+
             conn.commit()
             conn.close()
             print(f"数据库 '{self.db_file}' 初始化成功。")

@@ -1,91 +1,51 @@
-
-
-import os
 import json
 import time
-import sqlite3
 from openai import OpenAI
-import configparser
-from utils import user_data_path
+
 
 
 # 1.读取配置文件
 from config_handler import ConfigHandler
 config = ConfigHandler()
 
-# 2. 平台配置表 (只需修改这里即可切换)
-PLATFORM_CONFIG = {
-    "deepseek": {
-        "config_key": "deepseek",  # 对应 config.conf 中 [API_KEYS] 下的 key
-        "base_url": "https://api.deepseek.com",
-        "model": "deepseek-chat"
-    },
-    "volcengine": {
-        "config_key": "volcengine",
-        "base_url": "https://ark.cn-beijing.volces.com/api/v3",
-        "model": "ep-20251224114653-z55vt", # 替换为你的火山引擎 Endpoint ID
-    },
-    "aliyun": {
-        "config_key": "aliyun",
-        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        "model": "qwen-plus"# qwen-plus, qwen-max, qwen-turbo
-    },
-    "openai": {
-        "config_key": "openai",
-        "base_url": "https://api.openai.com/v1",
-        "model": "gpt-4-1106-preview"
-    }
-}
 
-# ================= 配置区域 =================
-CURRENT_PLATFORM = "deepseek"  # 在这里切换: deepseek, volcengine, aliyun
-# ===========================================
-
-def get_api_key_from_config(key_name):
-    """从配置文件读取 API Key"""
-    try:
-        conf = configparser.ConfigParser()
-        config_path = user_data_path('config.conf')
-        conf.read(config_path, encoding='utf-8')
-        
-        if 'API_KEYS' not in conf:
-            raise ValueError("配置文件中未找到 [API_KEYS] 节")
-        
-        api_key = conf.get('API_KEYS', key_name).strip()
-        if not api_key :
-            raise ValueError(f"API Key '{key_name}' 未配置或为占位符")
-        
-        return api_key
-    except configparser.NoOptionError:
-        raise ValueError(f"配置文件中未找到 '{key_name}'")
-    except Exception as e:
-        raise ValueError(f"读取配置文件失败: {e}")
 
 def get_client(platform_name):
     """通用客户端工厂函数"""
-    if platform_name not in PLATFORM_CONFIG:
-        raise ValueError(f"未知平台: {platform_name}")
+    platform_config = config.get_platform_config(platform_name)
     
-    platform_config = PLATFORM_CONFIG[platform_name]
-    api_key = get_api_key_from_config(platform_config["config_key"])
+    if not platform_config:
+        raise ValueError(f"未知平台或配置缺失: {platform_name}")
     
-    if not api_key:
-        raise ValueError(f"缺少 API Key: {platform_config['config_key']}")
+    api_key = platform_config.get("api_key")
+    
+    if not api_key or "xxxx" in api_key:
+        raise ValueError(f"API Key 无效或未配置 ({platform_name})")
         
     return OpenAI(api_key=api_key, base_url=platform_config["base_url"]), platform_config["model"]
 
-def analyze_health_data_stream(csv_data, platform=None):
+def analyze_health_data_stream(csv_data, platform=None, progress_callback=None):
     """
     通用流式分析函数
     :param csv_data: CSV格式的健康数据
-    :param platform: 平台名称，默认使用 CURRENT_PLATFORM
+    :param platform: 平台名称，默认使用 config.conf 中的配置
+    :param progress_callback: 进度回调函数，接收 (full_content)
     :return: 解析后的 JSON 对象 或 None
     """
     # 如果未指定平台，使用全局配置
     if platform is None:
-        platform = CURRENT_PLATFORM
+        platform = config.get_ai_platform()
     
-    client, model_name = get_client(platform)
+    try:
+        client, model_name = get_client(platform)
+    except ValueError as e:
+        error_msg = f"配置错误: {str(e)}\n请检查 config.conf 中的 API Key 配置。"
+        print(error_msg)
+        return {
+            "report_meta": {"valid_samples_count": 0},
+            "conclusion": error_msg,
+            "health_evaluation": {"overall_score": 0, "rating": "配置错误"}
+        }
     
     # System Prompt (保持您的原始设定)
     system_prompt = """
@@ -171,7 +131,7 @@ def analyze_health_data_stream(csv_data, platform=None):
             temperature=0.1,
             stream=True, # <--- 开启流式
             stream_options={"include_usage": True}, # <--- 关键：请求在流最后返回 Token 统计
-            # response_format={"type": "json_object"} # 建议开启，但部分旧模型可能不支持，若报错请注释
+            response_format={"type": "json_object"} # 强制输出 JSON 格式，防止结构错误
         )
 
         print("📝 生成中: ", end="", flush=True)
@@ -183,6 +143,9 @@ def analyze_health_data_stream(csv_data, platform=None):
                 content = chunk.choices[0].delta.content
                 full_content += content
                 
+                if progress_callback:
+                    progress_callback(full_content)
+
                 # 记录首字延迟 (TTFT)
                 if first_token_time is None:
                     first_token_time = time.time()
@@ -232,63 +195,30 @@ def analyze_health_data_stream(csv_data, platform=None):
         return None
 
 
-def load_health_data_from_db(db_path='history.db'):
-    """从 history.db 读取健康数据并转换为 CSV 格式字符串"""
-    try:
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        # 查询健康数据，心率需要除以10转换为实际值
-        query = """
-            SELECT 
-                created_at,
-                CAST(heartrate AS REAL) / 10.0 AS heartrate,
-                spo2,
-                bk,
-                fatigue,
-                systolic,
-                diastolic
-            FROM health_data
-            ORDER BY created_at DESC
-        """
-        
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        if not rows:
-            print("⚠️ 数据库中没有找到健康数据")
-            return None
-        
-        # 构建 CSV 格式字符串
-        csv_lines = ["采集时间,心率,血氧,微循环,疲劳指数,收缩压,舒张压"]
-        
-        for row in rows:
-            created_at, heartrate, spo2, bk, fatigue, systolic, diastolic = row
-            csv_lines.append(f"{created_at},{heartrate},{spo2},{bk},{fatigue},{systolic},{diastolic}")
-        
-        csv_data = "\n".join(csv_lines)
-        print(f"✅ 成功从数据库读取 {len(rows)} 条健康数据记录")
-        return csv_data
-        
-    except sqlite3.Error as e:
-        print(f"❌ 数据库读取错误: {e}")
+def generate_analysis_report(df, progress_callback=None):
+    """
+    根据 DataFrame 生成 AI 分析报告
+    :param df: 包含健康数据的 DataFrame
+    :param progress_callback: 进度回调函数
+    :return: 解析后的 JSON 对象 或 None
+    """
+    if df is None or df.empty:
+        print("⚠️ DataFrame 为空，无法生成报告")
         return None
-    except FileNotFoundError:
-        print(f"❌ 未找到数据库文件: {db_path}")
-        return None
-
-if __name__ == "__main__":
-    # 从数据库读取健康数据
-    sample_csv = load_health_data_from_db('history.db')
     
-    if not sample_csv:
-        print("❌ 无法读取数据，程序退出")
-        exit(1)
-
-    # 执行分析（自动使用 CURRENT_PLATFORM 配置）
-    final_report = analyze_health_data_stream(sample_csv)
-
-    if final_report:
-        print("\n=== 最终 JSON 报告 ===")
-        print(json.dumps(final_report, ensure_ascii=False, indent=2))
+    # 简单的列名映射
+    column_map = {
+        'created_at': '采集时间',
+        'heartrate': '心率',
+        'spo2': '血氧',
+        'bk': '微循环',
+        'fatigue': '疲劳指数',
+        'systolic': '收缩压',
+        'diastolic': '舒张压',
+        'cardiac': '心输出',
+        'resistance': '外周阻力'
+    }
+    df_renamed = df.rename(columns=column_map)
+    
+    csv_data = df_renamed.to_csv(index=False)
+    return analyze_health_data_stream(csv_data, progress_callback=progress_callback)

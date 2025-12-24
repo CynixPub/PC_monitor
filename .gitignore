@@ -1,6 +1,15 @@
 # 数据库文件
 history.db
 
+#配置文件
+config.conf
+
+#环境变量文件
+.env
+
+#运行临时目录
+/tmp/
+
 # PyInstaller 生成的目录
 /dist/
 /build/
@@ -12,6 +21,6 @@ history.db
 
 # Python 缓存
 __pycache__/
-.env
-config.conf
+
+
 

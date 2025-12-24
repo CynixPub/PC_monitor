@@ -1,5 +1,7 @@
 import sys
 import os
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QFont, QFontMetrics
+from PySide6.QtCore import Qt
 
 def resource_path(relative_path):
     """
@@ -29,3 +31,23 @@ def user_data_path(relative_path):
         base_path = os.path.abspath(".")
         
     return os.path.join(base_path, relative_path)
+
+def create_emoji_icon(emoji_char, size=64):
+    """创建一个基于 Emoji 的 QIcon"""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    
+    font = QFont("Segoe UI Emoji", size - 10) 
+    font.setPixelSize(size - 10)
+    painter.setFont(font)
+    
+    font_metrics = QFontMetrics(font)
+    text_width = font_metrics.horizontalAdvance(emoji_char)
+    text_rect = font_metrics.boundingRect(emoji_char)
+    y_pos = (pixmap.height() - text_rect.height()) / 2 + font_metrics.ascent()
+    x_pos = (pixmap.width() - text_width) / 2
+
+    painter.drawText(int(x_pos), int(y_pos), emoji_char)
+    painter.end()
+    return QIcon(pixmap)

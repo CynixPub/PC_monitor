@@ -11,12 +11,30 @@ class ConfigHandler:
     def _create_default_config(self):
         """创建或覆盖为默认配置文件"""
         self.config['SERIAL'] = {'COM': 'COM5'}
-        self.config['API_KEYS'] = {
-            'OpenAI': 'sk-xxxxxxxxxxxxxxxx',
-            'DeepSeek': 'sk-xxxxxxxxxxxxxxxx',
-            'Aliyun': 'sk-xxxxxxxxxxxxxxxx',
-            'Volcengine': 'xxxxxxxxxxxxxxxx'
+        self.config['AI'] = {'platform': 'deepseek'}
+        
+        # Platform Configs
+        self.config['deepseek'] = {
+            "api_key": "sk-xxxxxxxxxxxxxxxx",
+            "base_url": "https://api.deepseek.com",
+            "model": "deepseek-chat"
         }
+        self.config['volcengine'] = {
+            "api_key": "xxxxxxxxxxxxxxxx",
+            "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+            "model": "ep-20251224114653-z55vt"
+        }
+        self.config['aliyun'] = {
+            "api_key": "sk-xxxxxxxxxxxxxxxx",
+            "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "model": "qwen-plus"
+        }
+        self.config['openai'] = {
+            "api_key": "sk-xxxxxxxxxxxxxxxx",
+            "base_url": "https://api.openai.com/v1",
+            "model": "gpt-4-1106-preview"
+        }
+
         with open(self.config_file, 'w') as f:
             self.config.write(f)
         print(f"已创建/重置为默认配置: {self.config_file}")
@@ -30,10 +48,40 @@ class ConfigHandler:
                 read_ok = self.config.read(self.config_file, encoding='utf-8')
                 if not read_ok:
                     raise ValueError("配置文件为空。")
-                # ConfigParser 会将 option 名称转为小写，所以检查时用小写
-                if 'SERIAL' not in self.config or 'com' not in self.config['SERIAL']:
-                    raise configparser.NoSectionError('SERIAL or com key missing')
-                print(f"已加载配置: {self.config_file}")
+                
+                # 检查并补充缺失的配置项
+                updated = False
+                
+                if 'SERIAL' not in self.config:
+                    self.config['SERIAL'] = {'COM': 'COM5'}
+                    updated = True
+                
+                if 'AI' not in self.config:
+                    self.config['AI'] = {'platform': 'deepseek'}
+                    updated = True
+                
+                # Check for platform configs
+                platforms = ['deepseek', 'volcengine', 'aliyun', 'openai']
+                for p in platforms:
+                    section = p
+                    if section not in self.config:
+                        if p == 'deepseek':
+                            self.config[section] = {"api_key": "sk-xxxxxxxxxxxxxxxx", "base_url": "https://api.deepseek.com", "model": "deepseek-chat"}
+                        elif p == 'volcengine':
+                            self.config[section] = {"api_key": "xxxxxxxxxxxxxxxx", "base_url": "https://ark.cn-beijing.volces.com/api/v3", "model": "ep-20251224114653-z55vt"}
+                        elif p == 'aliyun':
+                            self.config[section] = {"api_key": "sk-xxxxxxxxxxxxxxxx", "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen-plus"}
+                        elif p == 'openai':
+                            self.config[section] = {"api_key": "sk-xxxxxxxxxxxxxxxx", "base_url": "https://api.openai.com/v1", "model": "gpt-4-1106-preview"}
+                        updated = True
+                
+                if updated:
+                    with open(self.config_file, 'w') as f:
+                        self.config.write(f)
+                    print(f"已更新配置文件: {self.config_file}")
+                else:
+                    print(f"已加载配置: {self.config_file}")
+
             except (configparser.Error, ValueError) as e:
                 print(f"配置文件 '{self.config_file}' 格式错误或不完整: {e}。将使用默认配置重建。")
                 self._create_default_config()
@@ -47,3 +95,29 @@ class ConfigHandler:
             # 如果配置丢失，返回默认值并重新生成配置
             self._create_default_config()
             return self.config.get('SERIAL', 'com').strip("'\"")
+
+    def get_api_key(self, platform_key: str) -> str:
+        """获取 API Key (兼容旧代码，建议直接使用 get_platform_config)"""
+        try:
+            # 尝试从对应平台 section 获取
+            return self.config.get(platform_key.lower(), 'api_key').strip("'\"")
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return ""
+
+    def get_ai_platform(self) -> str:
+        """获取当前 AI 平台"""
+        try:
+            return self.config.get('AI', 'platform').strip("'\"").lower()
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            return "deepseek"
+
+    def get_platform_config(self, platform_name: str) -> dict:
+        """获取指定平台的配置信息"""
+        section = platform_name
+        if self.config.has_section(section):
+            return {
+                "api_key": self.config.get(section, "api_key"),
+                "base_url": self.config.get(section, "base_url"),
+                "model": self.config.get(section, "model")
+            }
+        return None
