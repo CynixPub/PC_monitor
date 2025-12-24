@@ -10,7 +10,7 @@ base_url = https://api.deepseek.com
 model = deepseek-chat
 
 [volcengine]
-api_key = sk-xxxxxxxxxxxxxxxx
+api_key = xxxxxxxxxxxxxxxx
 base_url = https://ark.cn-beijing.volces.com/api/v3
 model = ep-xxxxxxxxxxxxxx-xxxxx
 

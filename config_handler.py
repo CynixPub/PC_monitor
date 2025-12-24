@@ -22,7 +22,7 @@ class ConfigHandler:
         self.config['volcengine'] = {
             "api_key": "xxxxxxxxxxxxxxxx",
             "base_url": "https://ark.cn-beijing.volces.com/api/v3",
-            "model": "ep-20251224114653-z55vt"
+            "model": "ep-xxxxxxxxxxxxxx-xxxxx"
         }
         self.config['aliyun'] = {
             "api_key": "sk-xxxxxxxxxxxxxxxx",
