@@ -28,12 +28,12 @@ class MouseDataProcessor:
     def parse_payload(self, payload: bytes) -> Tuple[int, int, int, int]:
         """
         支持两种格式：
-        - <IIII>: distance_px, left, mid, right (16字节)
+        - <IIII>: distance_px, left, right, mid (16字节) - 注意：right和mid在数据中是交换的
         - <II>: distance_px, left (8字节)，mid/right 置 0
         返回像素单位的累计值。
         """
         if len(payload) >= 16:
-            distance, left, mid, right = struct.unpack('<IIII', payload[:16])
+            distance, left, right, mid = struct.unpack('<IIII', payload[:16])
         elif len(payload) == 8:
             distance, left = struct.unpack('<II', payload)
             mid, right = 0, 0
