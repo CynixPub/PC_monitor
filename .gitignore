@@ -14,3 +14,4 @@ history.db
 __pycache__/
 .env
 config.conf
+
