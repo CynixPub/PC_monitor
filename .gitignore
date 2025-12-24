@@ -12,3 +12,5 @@ history.db
 
 # Python 缓存
 __pycache__/
+.env
+config.conf

@@ -216,7 +216,7 @@
      <item>
       <widget class="QPushButton" name="btn_history">
        <property name="text">
-        <string>查看历史趋势</string>
+        <string>查看历史数据</string>
        </property>
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>

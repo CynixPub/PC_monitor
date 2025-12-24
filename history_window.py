@@ -1,7 +1,10 @@
 import math
+import csv
+from datetime import datetime
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QTableView, QHeaderView, 
-    QHBoxLayout, QPushButton, QLabel, QStyledItemDelegate, QMenu, QApplication
+    QHBoxLayout, QPushButton, QLabel, QStyledItemDelegate, QMenu, QApplication,
+    QFileDialog, QMessageBox
 )
 from PySide6.QtSql import QSqlDatabase, QSqlQueryModel, QSqlQuery
 from PySide6.QtCore import Qt
@@ -112,6 +115,18 @@ class HistoryWindow(QDialog):
         # 设置表头为粗体
         self.view.horizontalHeader().setStyleSheet("QHeaderView::section { font-weight: bold; }")
 
+        # --- 功能按钮 ---
+        self.extra_button = QPushButton("导出数据")
+        self.extra_button.clicked.connect(self.export_data)
+        self.ai_analysis_button = QPushButton("AI 分析")
+        #self.ai_analysis_button.clicked.connect(self.ai_analysis)
+
+        functions_layout = QHBoxLayout()
+        functions_layout.addWidget(self.extra_button)
+        functions_layout.addWidget(self.ai_analysis_button)
+        functions_layout.addStretch()
+
+
         # --- 分页控件 ---
         self.prev_button = QPushButton("上一页")
         self.prev_button.clicked.connect(self.prev_page)
@@ -124,12 +139,19 @@ class HistoryWindow(QDialog):
         pagination_layout.addWidget(self.prev_button)
         pagination_layout.addWidget(self.page_label)
         pagination_layout.addWidget(self.next_button)
-        pagination_layout.addStretch()
+        pagination_layout.addSpacing(20)
 
         # --- 主布局 ---
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(self.view)
-        main_layout.addLayout(pagination_layout)
+        # 创建底部控件容器
+        bottom_layout = QHBoxLayout()
+        bottom_layout.addLayout(functions_layout)   # 左侧：功能按钮
+        bottom_layout.addLayout(pagination_layout)  # 右侧：翻页按钮
+
+        # 添加到主布局
+        main_layout.addLayout(bottom_layout)
+
         self.setLayout(main_layout)
 
     def _show_context_menu(self, pos):
@@ -253,6 +275,74 @@ class HistoryWindow(QDialog):
             if field_name in const.HEALTH_METRICS_TOOLTIPS:
                 tooltip = const.HEALTH_METRICS_TOOLTIPS[field_name]
                 self.model.setHeaderData(col, Qt.Horizontal, tooltip, Qt.ToolTipRole)
+
+    def export_data(self):
+        """导出所有历史数据到 CSV 文件"""
+        if self.total_rows == 0:
+            QMessageBox.information(self, "提示", "暂无数据可导出")
+            return
+        
+        # 生成默认文件名：CyMouse_数据_日期时间.csv
+        default_filename = f"CyMouse_健康数据_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        # 让用户选择保存位置
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "导出数据",
+            default_filename,
+            "CSV 文件 (*.csv);;所有文件 (*.*)"
+        )
+        
+        if not file_path:
+            return  # 用户取消
+        
+        try:
+            # 查询所有数据（不分页）
+            query = QSqlQuery(
+                "SELECT created_at, heartrate, spo2, bk, fatigue, systolic, "
+                "diastolic, CAST(cardiac AS REAL) / 10.0 AS cardiac, resistance "
+                "FROM health_data ORDER BY id DESC",
+                self.db
+            )
+            
+            if not query.exec():
+                QMessageBox.critical(self, "错误", f"查询数据失败: {query.lastError().text()}")
+                return
+            
+            # 写入 CSV 文件
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                writer = csv.writer(csvfile)
+                
+                # 写入中文表头
+                headers = ['采集时间', '心率', '血氧', '微循环', '疲劳指数', 
+                          '收缩压', '舒张压', '心输出', '外周阻力']
+                writer.writerow(headers)
+                
+                # 写入数据行
+                row_count = 0
+                while query.next():
+                    row = [
+                        query.value(0),  # created_at
+                        query.value(1),  # heartrate
+                        query.value(2),  # spo2
+                        query.value(3),  # bk
+                        query.value(4),  # fatigue
+                        query.value(5),  # systolic
+                        query.value(6),  # diastolic
+                        query.value(7),  # cardiac (已除以10)
+                        query.value(8),  # resistance
+                    ]
+                    writer.writerow(row)
+                    row_count += 1
+            
+            QMessageBox.information(
+                self, 
+                "导出成功", 
+                f"已成功导出 {row_count} 条记录到:\n{file_path}"
+            )
+            
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"导出失败: {str(e)}")
 
     def closeEvent(self, event):
         """重写 closeEvent，在窗口关闭时断开数据库连接"""

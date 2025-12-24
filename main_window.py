@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon, QAction, QPixmap, QPainter, QFont, QFontMetrics
 from PySide6.QtCore import Qt, QTimer, QFile, QThread
 from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QFrame
 
 # --- 本地模块导入 ---
 from serial_worker import SerialWorker
@@ -17,7 +18,7 @@ from database_handler import DatabaseHandler
 from history_window import HistoryWindow
 import constants as const
 from mouse_handler import MouseDataProcessor
-from utils import resource_path # <--- 导入新函数
+from utils import resource_path 
 
 
 LOGGING_ENABLED = True
@@ -45,14 +46,14 @@ class MainWindow(QMainWindow):
         if self.start_button:
             self.start_button.clicked.connect(self.on_start_button_clicked)
             
-        # --- 新增：绑定历史数据按钮 ---
+        # --- 绑定历史数据按钮 ---
         self.history_button = self.findChild(QPushButton, "btn_history")
         if self.history_button:
             self.history_button.clicked.connect(self.show_history_window)
         else:
             print("警告: 未在 UI 文件中找到名为 'btn_history' 的 QPushButton。")
         
-        # --- 新增：绑定刷新鼠标数据按钮 ---
+        # --- 绑定刷新鼠标数据按钮 ---
         self.mousedata_button = self.findChild(QPushButton, "btn_mousedata")
         if self.mousedata_button:
             self.mousedata_button.clicked.connect(self.on_mousedata_button_clicked)
@@ -467,6 +468,7 @@ class MainWindow(QMainWindow):
             self.setCentralWidget(loaded)
 
     def _init_status_bar(self):
+        self.statusBar().setStyleSheet("QStatusBar::item { border: none; }")
         self.status_icon = QLabel()
         self.status_label = QLabel("未连接")
         self.statusBar().addWidget(self.status_icon)
